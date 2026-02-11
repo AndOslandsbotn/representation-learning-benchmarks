@@ -3,3 +3,6 @@ torchvision==0.24.1
 matplotlib==3.10.8
 tensorboard==2.20.0
 scikit-learn==1.7.2
+pandas==2.2.1
+plotly==5.18.0
+kaleido==0.2.1
