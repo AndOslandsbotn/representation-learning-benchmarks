@@ -1,4 +1,4 @@
-"""Extract activations from selected CNN proto1 layers and embed (t-SNE, Laplacian, etc.)."""
+"""Extract activations from selected CNN proto1 layers on MNIST and embed."""
 import torch
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
@@ -14,7 +14,6 @@ BATCH_SIZE = 64
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 RESULTS_DIR = "experiments/results"
 
-# (name for filenames/titles, callable model -> layer)
 LAYER_SPECS = [
     ("start_block", lambda m: m.conv[2]),
     ("end_layer", lambda m: m.conv),
@@ -31,7 +30,7 @@ def main():
     model.load_state_dict(torch.load(WEIGHTS_PATH, map_location="cpu"))
     model.eval()
 
-    test_ds = datasets.FashionMNIST(
+    test_ds = datasets.MNIST(
         root=DATA_DIR, train=False, download=True, transform=transforms.ToTensor()
     )
     loader = DataLoader(test_ds, batch_size=BATCH_SIZE, shuffle=False, num_workers=0)
@@ -39,15 +38,15 @@ def main():
     for layer_name, get_layer in LAYER_SPECS:
         layer = get_layer(model)
         X, y = extract_activations(model, layer, loader, device=DEVICE)
-        y_names = [test_ds.classes[i] for i in y]
+        y_names = [str(test_ds.classes[i]) for i in y]
         print(f"Layer {layer_name}: activations shape {X.shape}, labels shape {y.shape}")
 
         for cfg in EMBEDDING_CONFIGS:
             method = cfg["method"]
             kwargs = {k: v for k, v in cfg.items() if k != "method"}
             X_emb = compute_embedding(X, method=method, **kwargs)
-            title = f"CNN proto1 {layer_name} + {method.upper()}"
-            save_path = f"{RESULTS_DIR}/cnn_proto1_{layer_name}_{method}.html"
+            title = f"CNN proto1 MNIST {layer_name} + {method.upper()}"
+            save_path = f"{RESULTS_DIR}/cnn_proto1_mnist_{layer_name}_{method}.html"
             EmbeddingVisualizer(title=title).plot(X_emb, y_names, save_path=save_path)
 
 
